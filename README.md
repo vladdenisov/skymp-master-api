@@ -1,1 +1,0 @@
-# skymp-master-api
