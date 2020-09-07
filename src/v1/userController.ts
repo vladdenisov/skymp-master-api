@@ -2,7 +2,6 @@ import { Context } from "koa";
 import * as Router from "koa-router";
 import { getManager, Repository, Not, Equal } from "typeorm";
 import { validate, ValidationError } from "class-validator";
-import { hash } from "bcrypt";
 
 import { User } from "models/user";
 
@@ -39,15 +38,6 @@ export class UserController {
     }
   }
 
-  private static hash(input: string): Promise<string> {
-    const saltRounds = 10;
-    return new Promise<string>((resolve, reject) => {
-      hash(input, saltRounds, (err, hash) =>
-        err ? reject(err) : resolve(hash)
-      );
-    });
-  }
-
   static async createUser(ctx: Context | Router.RouterContext) {
     const userRepository: Repository<User> = getManager(
       (ctx as Record<string, string>)["connectionName"]
@@ -58,7 +48,7 @@ export class UserController {
     const user: User = new User();
     user.name = name;
     user.email = email;
-    user.hashedPassword = await UserController.hash(password);
+    user.password = password;
 
     const errors: ValidationError[] = await validate(user, {
       skipMissingProperties: true
@@ -93,8 +83,8 @@ export class UserController {
       if (ctx.request.body.email) {
         user.email = ctx.request.body.email;
       }
-      if (ctx.request.body.hashedPassword) {
-        user.hashedPassword = ctx.request.body.hashedPassword;
+      if (ctx.request.body.password) {
+        user.password = ctx.request.body.password;
       }
 
       const errors: ValidationError[] = await validate(user);

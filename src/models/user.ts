@@ -3,31 +3,78 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  PrimaryColumn,
+  BeforeInsert
 } from "typeorm";
+import { hash } from "bcrypt";
 
 import { Length, IsEmail } from "class-validator";
+
+const SALT_ROUNDS = 10;
 
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column("text")
+  @PrimaryColumn("varchar", { length: 32, nullable: false, unique: true })
   @Length(2, 32)
   name!: string;
 
-  @Column("text")
+  @PrimaryColumn("varchar", { length: 100, unique: true, nullable: false })
   @Length(5, 100)
   @IsEmail()
   email!: string;
 
-  @Column("text")
-  hashedPassword!: string;
+  @Column("varchar", { name: "password", nullable: false, length: 100 })
+  password!: string;
 
-  @CreateDateColumn()
+  @BeforeInsert()
+  async hashPassword(): Promise<void> {
+    const hashedPassword = await hash(this.password, SALT_ROUNDS);
+    this.password = hashedPassword;
+  }
+
+  @Column("boolean", {
+    name: "has_verified_email",
+    default: false,
+    nullable: false
+  })
+  hasVerifiedEmail!: boolean;
+
+  @Column("varchar", {
+    name: "verification_pin",
+    nullable: true,
+    default: null
+  })
+  verificationPin!: string;
+
+  @Column("timestamptz", {
+    name: "verification_pin_expires_at",
+    nullable: true,
+    default: null
+  })
+  verificationPinExpiresAt!: Date;
+
+  @Column("timestamptz", {
+    name: "verification_pin_sent_at",
+    nullable: true,
+    default: null
+  })
+  verificationPinSentAt!: Date;
+
+  @CreateDateColumn({
+    name: "create_at",
+    type: "timestamptz",
+    default: () => "CURRENT_TIMESTAMP"
+  })
   createAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({
+    name: "update_at",
+    type: "timestamptz",
+    default: () => "CURRENT_TIMESTAMP"
+  })
   updateAt!: Date;
 }
