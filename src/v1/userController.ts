@@ -4,9 +4,10 @@ import { getManager, Repository, Not, Equal } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 import { User } from "../models/user";
 import * as Router from "koa-router";
+import { hash } from "bcrypt";
 
 export class UserController {
-  public static getRouter() {
+  static getRouter() {
     return new Router()
       .get("/users", UserController.getUsers)
       .get("/users/:id", UserController.getUser)
@@ -15,7 +16,7 @@ export class UserController {
       .delete("/users/:id", UserController.deleteUser);
   }
 
-  public static async getUsers(ctx: Context | RouterContext) {
+  static async getUsers(ctx: Context | RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const users: User[] = await userRepository.find();
@@ -24,7 +25,7 @@ export class UserController {
     ctx.body = users;
   }
 
-  public static async getUser(ctx: Context | RouterContext) {
+  static async getUser(ctx: Context | RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const user = await userRepository.findOne(ctx.params.id);
@@ -38,13 +39,26 @@ export class UserController {
     }
   }
 
-  public static async createUser(ctx: Context | RouterContext) {
-    const userRepository: Repository<User> = getManager().getRepository(User);
+  private static hash(input: string): Promise<string> {
+    const saltRounds = 10;
+    return new Promise<string>((resolve, reject) => {
+      hash(input, saltRounds, (err, hash) =>
+        err ? reject(err) : resolve(hash)
+      );
+    });
+  }
+
+  static async createUser(ctx: Context | RouterContext) {
+    const userRepository: Repository<User> = getManager(
+      (ctx as Record<string, string>)["connectionName"]
+    ).getRepository(User);
+
+    const { name, email, password } = ctx.request.body;
 
     const user: User = new User();
-    user.name = ctx.request.body.name;
-    user.email = ctx.request.body.email;
-    user.hashedPassword = ctx.request.body.hashedPassword;
+    user.name = name;
+    user.email = email;
+    user.hashedPassword = await UserController.hash(password);
 
     const errors: ValidationError[] = await validate(user, {
       skipMissingProperties: true
@@ -63,7 +77,7 @@ export class UserController {
     }
   }
 
-  public static async updateUser(ctx: Context | RouterContext) {
+  static async updateUser(ctx: Context | RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const user = await userRepository.findOne(ctx.params.id);
@@ -107,7 +121,7 @@ export class UserController {
     }
   }
 
-  public static async deleteUser(ctx: Context | RouterContext) {
+  static async deleteUser(ctx: Context | RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const userToRemove = await userRepository.findOne(ctx.params.id);

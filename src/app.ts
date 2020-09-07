@@ -21,6 +21,8 @@ export class App {
       .use(cors())
       .use(koaBody({ multipart: true }));
 
+    this.app.context["connectionName"] = connection.name;
+
     if (options.enableLogging) this.app.use(logger());
 
     const v1 = getRouter();

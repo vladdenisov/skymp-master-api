@@ -18,6 +18,7 @@ beforeEach(async () => {
     database: sqliteDbPath,
     entities: entities,
     logging: false,
+    synchronize: true,
     name: "conn" + Math.random().toString()
   });
   app = new App(connection, { enableLogging: false });
@@ -38,5 +39,16 @@ describe("Backward compatibility", () => {
     const second = (await api.get("/v1/hello")).data;
     expect(first).toEqual("HELLO WORLD");
     expect(second).toEqual("HELLO WORLD");
+  });
+});
+
+describe("User system", () => {
+  it("should be able to create a new account", async () => {
+    const res = await api.post("/users", {
+      name: "GeneralEasterEgg",
+      email: "bar@example.com",
+      password: "no-clientside-hashing-plz"
+    });
+    expect(res.status).toEqual(201);
   });
 });
