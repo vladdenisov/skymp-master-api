@@ -1,10 +1,10 @@
 import { Context } from "koa";
-import { RouterContext } from "koa-router";
+import * as Router from "koa-router";
 import { getManager, Repository, Not, Equal } from "typeorm";
 import { validate, ValidationError } from "class-validator";
-import { User } from "../models/user";
-import * as Router from "koa-router";
 import { hash } from "bcrypt";
+
+import { User } from "models/user";
 
 export class UserController {
   static getRouter() {
@@ -16,7 +16,7 @@ export class UserController {
       .delete("/users/:id", UserController.deleteUser);
   }
 
-  static async getUsers(ctx: Context | RouterContext) {
+  static async getUsers(ctx: Context | Router.RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const users: User[] = await userRepository.find();
@@ -25,7 +25,7 @@ export class UserController {
     ctx.body = users;
   }
 
-  static async getUser(ctx: Context | RouterContext) {
+  static async getUser(ctx: Context | Router.RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const user = await userRepository.findOne(ctx.params.id);
@@ -48,7 +48,7 @@ export class UserController {
     });
   }
 
-  static async createUser(ctx: Context | RouterContext) {
+  static async createUser(ctx: Context | Router.RouterContext) {
     const userRepository: Repository<User> = getManager(
       (ctx as Record<string, string>)["connectionName"]
     ).getRepository(User);
@@ -77,7 +77,7 @@ export class UserController {
     }
   }
 
-  static async updateUser(ctx: Context | RouterContext) {
+  static async updateUser(ctx: Context | Router.RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const user = await userRepository.findOne(ctx.params.id);
@@ -121,7 +121,7 @@ export class UserController {
     }
   }
 
-  static async deleteUser(ctx: Context | RouterContext) {
+  static async deleteUser(ctx: Context | Router.RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const userToRemove = await userRepository.findOne(ctx.params.id);

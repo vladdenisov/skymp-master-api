@@ -5,7 +5,8 @@ import * as cors from "@koa/cors";
 import * as koaBody from "koa-body";
 import { Connection } from "typeorm";
 import * as Router from "koa-router";
-import { getRouter } from "./v1";
+
+import { getRouter } from "v1";
 
 export interface AppOptions {
   enableLogging: boolean;
@@ -43,7 +44,7 @@ export class App {
     });
   }
 
-  close() {
+  close(): void {
     this.onClose.forEach((f) => f());
     this.onClose = [];
   }

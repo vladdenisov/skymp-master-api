@@ -1,5 +1,4 @@
 import { Context } from "koa";
-import { RouterContext } from "koa-router";
 import * as Router from "koa-router";
 
 export class MiscController {
@@ -7,7 +6,7 @@ export class MiscController {
     return new Router().get("/hello", MiscController.hello);
   }
 
-  public static async hello(ctx: Context | RouterContext) {
+  public static async hello(ctx: Context | Router.RouterContext) {
     ctx.body = "HELLO WORLD";
   }
 }

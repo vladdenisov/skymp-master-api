@@ -1,7 +1,8 @@
 import { createConnection } from "typeorm";
-import { getConfig } from "./cfg";
-import { entities } from "models";
+
+import { getConfig } from "cfg";
 import { App } from "app";
+import { entities } from "models";
 
 const config = getConfig();
 

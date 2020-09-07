@@ -8,7 +8,7 @@ export interface Config {
   EMAIL_PASS: string;
 }
 
-export const getConfig = () => {
+export const getConfig = (): Config => {
   const cfgPath = "./src/config.json";
   const exampleConfig = fs.readFileSync("./src/config-example.json", "utf-8");
   if (!fs.existsSync(cfgPath)) fs.writeFileSync(cfgPath, exampleConfig);
