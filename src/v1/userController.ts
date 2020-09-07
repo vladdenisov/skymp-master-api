@@ -2,9 +2,19 @@ import { Context } from "koa";
 import { RouterContext } from "koa-router";
 import { getManager, Repository, Not, Equal } from "typeorm";
 import { validate, ValidationError } from "class-validator";
-import { User } from "../../models/user";
+import { User } from "../models/user";
+import * as Router from "koa-router";
 
 export class UserController {
+  public static getRouter() {
+    return new Router()
+      .get("/users", UserController.getUsers)
+      .get("/users/:id", UserController.getUser)
+      .post("/users", UserController.createUser)
+      .put("/users/:id", UserController.updateUser)
+      .delete("/users/:id", UserController.deleteUser);
+  }
+
   public static async getUsers(ctx: Context | RouterContext) {
     const userRepository: Repository<User> = getManager().getRepository(User);
 

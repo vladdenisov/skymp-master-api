@@ -1,5 +1,5 @@
 import { createConnection } from "typeorm";
-import { entities } from "../src/db/entities";
+import { entities } from "../src/models";
 import { App } from "../src/app";
 import Axios, { AxiosInstance } from "axios";
 import * as fs from "fs";
@@ -20,7 +20,7 @@ beforeEach(async () => {
     logging: false,
     name: "conn" + Math.random().toString()
   });
-  app = new App(connection);
+  app = new App(connection, { enableLogging: false });
   await app.listen(testPort);
 
   api = Axios.create({

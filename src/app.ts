@@ -4,25 +4,32 @@ import * as logger from "koa-logger";
 import * as cors from "@koa/cors";
 import * as koaBody from "koa-body";
 import { Connection } from "typeorm";
-import { router } from "./routes";
 import * as Router from "koa-router";
+import { getRouter } from "./v1";
+
+export interface AppOptions {
+  enableLogging: boolean;
+}
 
 export class App {
-  constructor(connection: Connection) {
+  constructor(connection: Connection, options: AppOptions) {
     if (!connection.isConnected)
       throw new Error("The app requires an active database connection to run");
 
-    this.app = new Koa();
-    this.app.use(helmet());
-    this.app.use(cors());
-    this.app.use(logger());
-    this.app.use(koaBody({ multipart: true }));
+    this.app = new Koa()
+      .use(helmet())
+      .use(cors())
+      .use(koaBody({ multipart: true }));
 
-    const appRouter = new Router({
+    if (options.enableLogging) this.app.use(logger());
+
+    const v1 = getRouter();
+    const router = new Router({
       prefix: "/api"
-    });
-    appRouter.use(router.routes()).use(router.allowedMethods());
-    this.app.use(appRouter.routes()).use(appRouter.allowedMethods());
+    })
+      .use(v1.routes())
+      .use("/v1", v1.routes());
+    this.app.use(router.routes()).use(router.allowedMethods());
 
     this.onClose.push(() => connection.close());
   }
@@ -36,6 +43,7 @@ export class App {
 
   close() {
     this.onClose.forEach((f) => f());
+    this.onClose = [];
   }
 
   private app: Koa;

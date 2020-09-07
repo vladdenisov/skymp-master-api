@@ -1,6 +1,6 @@
 import { createConnection } from "typeorm";
 import { getConfig } from "./cfg";
-import { entities } from "db/entities";
+import { entities } from "models";
 import { App } from "app";
 
 const config = getConfig();
@@ -13,7 +13,7 @@ createConnection({
   entities: entities
 })
   .then(async (connection) => {
-    const app = new App(connection);
+    const app = new App(connection, { enableLogging: true });
     await app.listen(config.PORT);
     console.log(`Server started on port ${config.PORT}.`);
   })
