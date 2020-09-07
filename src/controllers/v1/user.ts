@@ -2,7 +2,7 @@ import { Context } from "koa";
 import { RouterContext } from "koa-router";
 import { getManager, Repository, Not, Equal } from "typeorm";
 import { validate, ValidationError } from "class-validator";
-import { User } from "models/user";
+import { User } from "../../models/user";
 
 export class UserController {
   public static async getUsers(ctx: Context | RouterContext) {

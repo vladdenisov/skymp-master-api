@@ -1,11 +1,9 @@
 import { Context } from "koa";
 import * as Router from "koa-router";
 
-import { v1 } from "controllers";
+import { v1 } from "../../controllers";
 
-export const router = new Router({
-  prefix: "/v1"
-});
+export const router = new Router();
 
 router.get("/hello", (ctx: Context | Router.RouterContext) => {
   ctx.status = 200;

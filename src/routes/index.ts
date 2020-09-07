@@ -5,3 +5,10 @@ import { router as v1 } from "./v1";
 export const router = new Router();
 
 router.use(v1.routes());
+router.use(
+  new Router({
+    prefix: "/v1"
+  })
+    .use(v1.routes())
+    .routes()
+);
