@@ -5,8 +5,8 @@ import * as cors from "@koa/cors";
 import * as koaBody from "koa-body";
 import { createConnection } from "typeorm";
 
-// Throw error, when config.ts not exist
-import { config } from "config";
+import { getConfig } from "./cfg";
+const config = getConfig();
 
 import { entities } from "db/entities";
 import { router } from "routes";
