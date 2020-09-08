@@ -6,7 +6,7 @@ import { validate, ValidationError } from "class-validator";
 import { User } from "../models/user";
 
 export class UserController {
-  static getRouter() {
+  static getRouter(): Router {
     return new Router()
       .get("/users", UserController.getUsers)
       .get("/users/:id", UserController.getUser)
@@ -21,7 +21,7 @@ export class UserController {
     ).getRepository(User);
   }
 
-  static async getUsers(ctx: Context | Router.RouterContext) {
+  static async getUsers(ctx: Context | Router.RouterContext): Promise<void> {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const users: User[] = await userRepository.find();
@@ -30,7 +30,7 @@ export class UserController {
     ctx.body = users;
   }
 
-  static async getUser(ctx: Context | Router.RouterContext) {
+  static async getUser(ctx: Context | Router.RouterContext): Promise<void> {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const user = await userRepository.findOne(ctx.params.id);
@@ -44,7 +44,7 @@ export class UserController {
     }
   }
 
-  static async createUser(ctx: Context | Router.RouterContext) {
+  static async createUser(ctx: Context | Router.RouterContext): Promise<void> {
     const userRepository = UserController.getRepository(ctx);
 
     const { name, email, password } = ctx.request.body;
@@ -71,7 +71,7 @@ export class UserController {
     }
   }
 
-  static async updateUser(ctx: Context | Router.RouterContext) {
+  static async updateUser(ctx: Context | Router.RouterContext): Promise<void> {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const user = await userRepository.findOne(ctx.params.id);
@@ -115,7 +115,7 @@ export class UserController {
     }
   }
 
-  static async deleteUser(ctx: Context | Router.RouterContext) {
+  static async deleteUser(ctx: Context | Router.RouterContext): Promise<void> {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const userToRemove = await userRepository.findOne(ctx.params.id);

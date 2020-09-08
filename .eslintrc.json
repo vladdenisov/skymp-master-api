@@ -8,7 +8,8 @@
   ],
   "parserOptions": {
     "sourceType": "module",
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "createDefaultProgram": true
   },
   "rules": {
     "@typescript-eslint/no-empty-interface": "off",
