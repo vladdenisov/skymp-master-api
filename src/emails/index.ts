@@ -6,6 +6,32 @@ import { getConfig } from "cfg";
 
 const config = getConfig();
 
+const rootViews = path.join(__dirname, "templates");
+
+const createTestEmailTemplates = () => {
+  const user = "ethereal.user@ethereal.email";
+
+  const transport = nodemailer.createTransport({
+    auth: {
+      user: user,
+      pass: "verysecret"
+    },
+    host: "smtp.ethereal.email",
+    port: 587
+  });
+
+  return new EmailTemplates({
+    views: {
+      root: rootViews
+    },
+    message: {
+      from: user
+    },
+    transport: transport,
+    send: false
+  });
+};
+
 const transport = nodemailer.createTransport({
   auth: {
     user: config.EMAIL_USER,
@@ -15,16 +41,19 @@ const transport = nodemailer.createTransport({
   port: 465
 });
 
-const emailObject = new EmailTemplates({
-  views: {
-    root: path.join(__dirname, "templates")
-  },
-  message: {
-    from: config.EMAIL_USER
-  },
-  transport,
-  send: process.env.NODE_ENV === "production"
-});
+const emailObject =
+  process.env.NODE_ENV === "production"
+    ? new EmailTemplates({
+        views: {
+          root: rootViews
+        },
+        message: {
+          from: config.EMAIL_USER
+        },
+        transport: transport,
+        send: true
+      })
+    : createTestEmailTemplates();
 
 export const sendSignupVerifyCode = async (
   email: string,
