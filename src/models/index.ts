@@ -1,3 +1,4 @@
-import { User } from "./user";
+import { User, UserSubscriber } from "./user";
 
 export const entities = [User];
+export const subscribers = [UserSubscriber];

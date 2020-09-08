@@ -2,7 +2,7 @@ import { createConnection } from "typeorm";
 
 import { getConfig } from "cfg";
 import { App } from "app";
-import { entities } from "models";
+import { entities, subscribers } from "models";
 
 const config = getConfig();
 
@@ -11,7 +11,8 @@ createConnection({
   url: config.DB_URL,
   logging: ["query", "error"],
   synchronize: true,
-  entities: entities
+  entities: entities,
+  subscribers: subscribers
 })
   .then(async (connection) => {
     const app = new App(connection, { enableLogging: true });

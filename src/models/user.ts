@@ -3,13 +3,21 @@ import {
   PrimaryGeneratedColumn,
   Column,
   PrimaryColumn,
-  BeforeInsert
+  BeforeInsert,
+  CreateDateColumn,
+  UpdateDateColumn,
+  EventSubscriber,
+  EntitySubscriberInterface,
+  InsertEvent
 } from "typeorm";
 import { hash } from "bcrypt";
-
 import { Length, IsEmail } from "class-validator";
 
+import { sendSignupVerifyCode } from "emails";
+import { randomString } from "utils/random-string";
+
 const SALT_ROUNDS = 10;
+const VERIFICATION_EXPIRES_TIME_VALUE = 3600 * 4 * 1000; // 4h
 
 @Entity("users")
 export class User {
@@ -28,12 +36,6 @@ export class User {
   @Column("varchar", { name: "password", nullable: false, length: 100 })
   password!: string;
 
-  @BeforeInsert()
-  async hashPassword(): Promise<void> {
-    const hashedPassword = await hash(this.password, SALT_ROUNDS);
-    this.password = hashedPassword;
-  }
-
   @Column("boolean", {
     name: "has_verified_email",
     default: false,
@@ -41,7 +43,7 @@ export class User {
   })
   hasVerifiedEmail!: boolean;
 
-  /*@Column("varchar", {
+  @Column("varchar", {
     name: "verification_pin",
     nullable: true,
     default: null
@@ -74,5 +76,40 @@ export class User {
     type: "timestamp",
     default: () => "CURRENT_TIMESTAMP"
   })
-  updateAt!: Date;*/
+  updateAt!: Date;
+
+  @BeforeInsert()
+  async hashPassword(): Promise<void> {
+    this.password = await hash(this.password, SALT_ROUNDS);
+  }
+}
+
+@EventSubscriber()
+export class UserSubscriber implements EntitySubscriberInterface<User> {
+  listenTo(): typeof User {
+    return User;
+  }
+
+  async afterInsert(event: InsertEvent<User>): Promise<void> {
+    const pin = randomString(6);
+    const hashedPin = await hash(pin, SALT_ROUNDS);
+    const verificationPinSentAt = new Date();
+    const verificationPinExpiresAt = new Date(
+      verificationPinSentAt.getTime() + VERIFICATION_EXPIRES_TIME_VALUE
+    );
+
+    await event.manager.update(
+      User,
+      {
+        id: event.entity.id
+      },
+      {
+        verificationPin: hashedPin,
+        verificationPinSentAt: verificationPinSentAt,
+        verificationPinExpiresAt: verificationPinExpiresAt
+      }
+    );
+
+    sendSignupVerifyCode(event.entity.email, event.entity.name, pin);
+  }
 }
