@@ -1,10 +1,10 @@
-import * as fs from "fs";
 import { createConnection, getManager, Repository } from "typeorm";
 import Axios, { AxiosInstance } from "axios";
 
 import { entities } from "../src/models";
 import { App } from "../src/app";
 import { User } from "../src/models/user";
+import { getConfig } from "../src/cfg";
 
 const testPort = 7777;
 
@@ -13,15 +13,12 @@ let api: AxiosInstance;
 let users: Repository<User>;
 
 beforeEach(async () => {
-  const sqliteDbPath = "./temp.sqlite";
-  if (fs.existsSync(sqliteDbPath)) fs.unlinkSync(sqliteDbPath);
-
   const connection = await createConnection({
-    type: "sqlite",
-    database: sqliteDbPath,
-    entities: entities,
-    logging: false,
+    type: "postgres",
+    url: getConfig().DB_URL + "_test",
+    logging: ["query", "error"],
     synchronize: true,
+    entities: entities,
     name: "conn" + Math.random().toString()
   });
   app = new App(connection, { enableLogging: false });
@@ -35,6 +32,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  await users.clear();
   app.close();
 });
 
