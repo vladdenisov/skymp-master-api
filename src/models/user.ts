@@ -2,8 +2,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   PrimaryColumn,
   BeforeInsert
 } from "typeorm";
@@ -43,21 +41,21 @@ export class User {
   })
   hasVerifiedEmail!: boolean;
 
-  @Column("varchar", {
+  /*@Column("varchar", {
     name: "verification_pin",
     nullable: true,
     default: null
   })
   verificationPin!: string;
 
-  @Column("timestamptz", {
+  @Column("timestamp", {
     name: "verification_pin_expires_at",
     nullable: true,
     default: null
   })
   verificationPinExpiresAt!: Date;
 
-  @Column("timestamptz", {
+  @Column("timestamp", {
     name: "verification_pin_sent_at",
     nullable: true,
     default: null
@@ -66,15 +64,15 @@ export class User {
 
   @CreateDateColumn({
     name: "create_at",
-    type: "timestamptz",
+    type: "timestamp",
     default: () => "CURRENT_TIMESTAMP"
   })
   createAt!: Date;
 
   @UpdateDateColumn({
     name: "update_at",
-    type: "timestamptz",
+    type: "timestamp",
     default: () => "CURRENT_TIMESTAMP"
   })
-  updateAt!: Date;
+  updateAt!: Date;*/
 }

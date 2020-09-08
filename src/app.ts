@@ -6,17 +6,14 @@ import * as koaBody from "koa-body";
 import { Connection } from "typeorm";
 import * as Router from "koa-router";
 
-import { getRouter } from "v1";
+import { getRouter } from "./v1";
 
 export interface AppOptions {
   enableLogging: boolean;
 }
 
 export class App {
-  constructor(connection: Connection, options: AppOptions) {
-    if (!connection.isConnected)
-      throw new Error("The app requires an active database connection to run");
-
+  constructor(private connection: Connection, options: AppOptions) {
     this.app = new Koa()
       .use(helmet())
       .use(cors())
@@ -47,6 +44,10 @@ export class App {
   close(): void {
     this.onClose.forEach((f) => f());
     this.onClose = [];
+  }
+
+  get connectionName(): string {
+    return this.connection.name;
   }
 
   private app: Koa;

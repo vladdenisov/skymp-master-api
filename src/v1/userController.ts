@@ -3,7 +3,7 @@ import * as Router from "koa-router";
 import { getManager, Repository, Not, Equal } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 
-import { User } from "models/user";
+import { User } from "../models/user";
 
 export class UserController {
   static getRouter() {
@@ -13,6 +13,12 @@ export class UserController {
       .post("/users", UserController.createUser)
       .put("/users/:id", UserController.updateUser)
       .delete("/users/:id", UserController.deleteUser);
+  }
+
+  static getRepository(ctx: Context | Router.RouterContext): Repository<User> {
+    return getManager(
+      (ctx as Record<string, string>)["connectionName"]
+    ).getRepository(User);
   }
 
   static async getUsers(ctx: Context | Router.RouterContext) {
@@ -39,9 +45,7 @@ export class UserController {
   }
 
   static async createUser(ctx: Context | Router.RouterContext) {
-    const userRepository: Repository<User> = getManager(
-      (ctx as Record<string, string>)["connectionName"]
-    ).getRepository(User);
+    const userRepository = UserController.getRepository(ctx);
 
     const { name, email, password } = ctx.request.body;
 
