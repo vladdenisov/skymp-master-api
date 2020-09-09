@@ -2,7 +2,7 @@ import * as path from "path";
 import * as nodemailer from "nodemailer";
 import * as EmailTemplates from "email-templates";
 
-import { getConfig } from "cfg";
+import { getConfig } from "../cfg";
 
 const config = getConfig();
 

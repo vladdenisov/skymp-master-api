@@ -13,8 +13,8 @@ import {
 import { hash } from "bcrypt";
 import { Length, IsEmail } from "class-validator";
 
-import { sendSignupVerifyCode } from "emails";
-import { randomString } from "utils/random-string";
+import { sendSignupVerifyCode } from "../emails";
+import { randomString } from "../utils/random-string";
 
 const SALT_ROUNDS = 10;
 const VERIFICATION_EXPIRES_TIME_VALUE = 3600 * 4 * 1000; // 4h
