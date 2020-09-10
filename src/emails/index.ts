@@ -71,3 +71,12 @@ export const sendSignupVerifyCode = async (
     }
   });
 };
+
+export const sendSignupSuccess = async (email: string): Promise<void> => {
+  await emailObject.send({
+    template: "signup-success",
+    message: {
+      to: email
+    }
+  });
+};
