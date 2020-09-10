@@ -5,24 +5,16 @@ import {
   PrimaryColumn,
   BeforeInsert,
   CreateDateColumn,
-  UpdateDateColumn,
-  EventSubscriber,
-  EntitySubscriberInterface,
-  InsertEvent
+  UpdateDateColumn
 } from "typeorm";
-import { hash } from "bcrypt";
 import { Length, IsEmail } from "class-validator";
 
-import { sendSignupVerifyCode } from "../emails";
-import { randomString } from "../utils/random-string";
-
-const SALT_ROUNDS = 10;
-const VERIFICATION_EXPIRES_TIME_VALUE = 3600 * 4 * 1000; // 4h
+import { hashString } from "../utils/hashString";
 
 @Entity("users")
 export class User {
-  @PrimaryGeneratedColumn("uuid")
-  id!: string;
+  @PrimaryGeneratedColumn("increment")
+  id!: number;
 
   @PrimaryColumn("varchar", { length: 32, nullable: false, unique: true })
   @Length(2, 32)
@@ -80,36 +72,6 @@ export class User {
 
   @BeforeInsert()
   async hashPassword(): Promise<void> {
-    this.password = await hash(this.password, SALT_ROUNDS);
-  }
-}
-
-@EventSubscriber()
-export class UserSubscriber implements EntitySubscriberInterface<User> {
-  listenTo(): typeof User {
-    return User;
-  }
-
-  async afterInsert(event: InsertEvent<User>): Promise<void> {
-    const pin = randomString(6);
-    const hashedPin = await hash(pin, SALT_ROUNDS);
-    const verificationPinSentAt = new Date();
-    const verificationPinExpiresAt = new Date(
-      verificationPinSentAt.getTime() + VERIFICATION_EXPIRES_TIME_VALUE
-    );
-
-    await event.manager.update(
-      User,
-      {
-        id: event.entity.id
-      },
-      {
-        verificationPin: hashedPin,
-        verificationPinSentAt: verificationPinSentAt,
-        verificationPinExpiresAt: verificationPinExpiresAt
-      }
-    );
-
-    sendSignupVerifyCode(event.entity.email, event.entity.name, pin);
+    this.password = await hashString(this.password, this.email);
   }
 }
