@@ -5,7 +5,7 @@ import { entities } from "../src/models";
 import { App } from "../src/app";
 import { User } from "../src/models/user";
 import { getConfig } from "../src/cfg";
-import { VERIFICATION_EXPIRES_TIME_VALUE } from "../src/v1/userController";
+import { VERIFICATION_EXPIRES_TIME_VALUE } from "../src/models/user";
 import { hashString } from "../src/utils/hashString";
 
 const testPort = 7777;

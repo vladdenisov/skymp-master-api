@@ -9,7 +9,12 @@ import {
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 
+import { sendSignupVerifyCode } from "../emails";
+
 import { hashString } from "../utils/hashString";
+import { randomString } from "../utils/random-string";
+
+export const VERIFICATION_EXPIRES_TIME_VALUE = 3600 * 4 * 1000; // 4h
 
 @Entity("users")
 export class User {
@@ -26,6 +31,7 @@ export class User {
   email!: string;
 
   @Column("varchar", { name: "password", nullable: false, length: 100 })
+  @Length(6)
   password!: string;
 
   @Column("boolean", {
@@ -73,5 +79,17 @@ export class User {
   @BeforeInsert()
   async hashPassword(): Promise<void> {
     this.password = await hashString(this.password, this.email);
+  }
+
+  @BeforeInsert()
+  async sendVerifyPin(): Promise<void> {
+    const pin = randomString(6);
+    this.verificationPin = await hashString(pin, this.email);
+    this.verificationPinSentAt = new Date();
+    this.verificationPinExpiresAt = new Date(
+      this.verificationPinSentAt.getTime() + VERIFICATION_EXPIRES_TIME_VALUE
+    );
+
+    sendSignupVerifyCode(this.email, this.name, pin);
   }
 }

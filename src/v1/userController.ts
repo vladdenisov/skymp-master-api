@@ -5,10 +5,7 @@ import { validate, ValidationError } from "class-validator";
 
 import { hashString } from "../utils/hashString";
 import { User } from "../models/user";
-import { sendSignupVerifyCode } from "../emails";
-import { randomString } from "../utils/random-string";
-
-export const VERIFICATION_EXPIRES_TIME_VALUE = 3600 * 4 * 1000; // 4h
+import { sendSignupSuccess } from "../emails";
 
 export class UserController {
   static getRouter(): Router {
@@ -43,8 +40,10 @@ export class UserController {
     } else if (await userRepository.findOne({ email: user.email })) {
       ctx.status = 400;
       ctx.body = "The specified e-mail address already exists";
+    } else if (await userRepository.findOne({ name: user.name })) {
+      ctx.status = 400;
+      ctx.body = "A user with the same name already exists";
     } else {
-      await UserController.beforeInsert(user);
       await userRepository.save(user);
       const actualUser = await userRepository.findOne({ email: user.email });
       if (actualUser) {
@@ -85,20 +84,12 @@ export class UserController {
         hasVerifiedEmail: true
       }
     );
-    updateResult.affected ? (ctx.status = 200) : ctx.throw(404);
-  }
 
-  private static async beforeInsert(user: User): Promise<void> {
-    const pin = randomString(6);
-    const hashedPin = await hashString(pin, user.email);
-    const verificationPinSentAt = new Date();
-    const verificationPinExpiresAt = new Date(
-      verificationPinSentAt.getTime() + VERIFICATION_EXPIRES_TIME_VALUE
-    );
-    user.verificationPin = hashedPin;
-    user.verificationPinSentAt = verificationPinSentAt;
-    user.verificationPinExpiresAt = verificationPinExpiresAt;
-
-    sendSignupVerifyCode(user.email, user.name, pin);
+    if (updateResult.affected) {
+      sendSignupSuccess(ctx.request.body.email);
+      ctx.status = 200;
+    } else {
+      ctx.throw(404);
+    }
   }
 }
