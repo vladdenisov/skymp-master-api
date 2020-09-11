@@ -88,7 +88,7 @@ export class UserController {
     );
 
     if (updateResult.affected) {
-      sendSignupSuccess(ctx.request.body.email);
+      await sendSignupSuccess(ctx.request.body.email);
       ctx.status = 200;
     } else {
       ctx.throw(404);
