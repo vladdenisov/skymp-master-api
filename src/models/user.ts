@@ -89,6 +89,6 @@ export class User {
       this.verificationPinSentAt.getTime() + VERIFICATION_EXPIRES_TIME_VALUE
     );
 
-    sendSignupVerifyCode(this.email, this.name, pin);
+    await sendSignupVerifyCode(this.email, this.name, pin);
   }
 }
