@@ -12,7 +12,6 @@ import { Length, IsEmail } from "class-validator";
 import { sendSignupVerifyCode } from "../emails";
 
 import { hashString } from "../utils/hashString";
-import { randomString } from "../utils/random-string";
 
 export const VERIFICATION_EXPIRES_TIME_VALUE = 3600 * 4 * 1000; // 4h
 
@@ -83,7 +82,7 @@ export class User {
 
   @BeforeInsert()
   async sendVerifyPin(): Promise<void> {
-    const pin = randomString(6);
+    const pin = this.verificationPin;
     this.verificationPin = await hashString(pin, this.email);
     this.verificationPinSentAt = new Date();
     this.verificationPinExpiresAt = new Date(

@@ -6,6 +6,7 @@ import { validate, ValidationError } from "class-validator";
 import { hashString } from "../utils/hashString";
 import { User } from "../models/user";
 import { sendSignupSuccess } from "../emails";
+import { randomString } from "../utils/random-string";
 
 export class UserController {
   static getRouter(): Router {
@@ -29,6 +30,7 @@ export class UserController {
     user.name = name;
     user.email = email;
     user.password = password;
+    user.verificationPin = randomString(6);
 
     const errors: ValidationError[] = await validate(user, {
       skipMissingProperties: true

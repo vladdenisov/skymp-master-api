@@ -43,18 +43,19 @@ interface TestUserInfo {
 }
 
 const createTestUser = async (): Promise<TestUserInfo> => {
-  const pinHashed = await hashString("qwerty", "lelele@test.be");
   const usr: User = new User();
   usr.hasVerifiedEmail = false;
   usr.name = "igor";
   usr.email = "lelele@test.be";
   usr.password = "jejeje";
-  usr.verificationPin = pinHashed;
+  usr.verificationPin = "qwerty";
   usr.verificationPinExpiresAt = new Date(Date.now() + 1000000);
   usr.verificationPinSentAt = new Date();
   await users.save(usr);
 
-  const user = await users.findOne({ verificationPin: pinHashed });
+  const user = await users.findOne({
+    verificationPin: await hashString("qwerty", "lelele@test.be")
+  });
   expect(user).not.toBeFalsy();
   if (!user) return { user: usr };
 
