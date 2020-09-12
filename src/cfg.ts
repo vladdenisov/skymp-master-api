@@ -6,6 +6,7 @@ export interface Config {
   DB_URL: string;
   EMAIL_USER: string;
   EMAIL_PASS: string;
+  STATS_CSV_PATH: string;
 }
 
 export const getConfig = (): Config => {
