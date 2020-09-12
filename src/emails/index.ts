@@ -55,7 +55,7 @@ const emailObject =
       })
     : createTestEmailTemplates();
 
-export const sendSignupVerifyCode = async (
+export const sendSignupVerifyPin = async (
   email: string,
   username: string,
   code: string
@@ -77,6 +77,23 @@ export const sendSignupSuccess = async (email: string): Promise<void> => {
     template: "signup-success",
     message: {
       to: email
+    }
+  });
+};
+
+export const sendSignupResetPin = async (
+  email: string,
+  username: string,
+  code: string
+): Promise<void> => {
+  await emailObject.send({
+    template: "signup-reset-pin",
+    message: {
+      to: email
+    },
+    locals: {
+      username: username,
+      code: code
     }
   });
 };
