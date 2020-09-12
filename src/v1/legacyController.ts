@@ -24,12 +24,15 @@ const g_servers = new Map<string, Server>();
 
 export const latestVersion = "5.0.6.1";
 
-export const defaultServerTimeout = 10000;
+export const defaultServerTimeout = 10 * 1000;
+
+export const defaultStatsUpdateRate = 60 * 1000;
 
 const historicalStatsManager = new StatsManager("./data/stats0911.csv");
 
 export class LegacyController {
   public static serverTimeout = defaultServerTimeout;
+  public static statsUpdateRate = defaultStatsUpdateRate;
 
   static getRouter(): Router {
     return new Router()
@@ -120,14 +123,20 @@ export class LegacyController {
 
     g_servers.set(ctx.params.address, server);
 
-    const st = LegacyController.getStatsManager(ctx);
+    LegacyController.updateStats(LegacyController.getStatsManager(ctx));
+
+    ctx.body = "Nice";
+  }
+
+  private static updateStats(st: StatsManager) {
     const lastAdd = st.getLastAddMoment();
-    if (!lastAdd || Date.now() - lastAdd.getTime() > 1000 * 60) {
+    if (
+      !lastAdd ||
+      Date.now() - lastAdd.getTime() > LegacyController.statsUpdateRate
+    ) {
       const serverList = Array.from(g_servers).map((pair) => pair[1]);
       st.add(makeStatsElement(new Date(), serverList));
     }
-
-    ctx.body = "Nice";
   }
 
   private static getStatsManager(

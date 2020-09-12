@@ -12,7 +12,8 @@ import { hashString } from "../src/utils/hashString";
 import {
   latestVersion,
   LegacyController,
-  defaultServerTimeout
+  defaultServerTimeout,
+  defaultStatsUpdateRate
 } from "../src/v1/legacyController";
 import { StatsElement, StatsManager } from "../src/utils/statsManager";
 import { getMyPublicIp } from "../src/utils/publicIp";
@@ -246,6 +247,45 @@ describe("Legacy routes", () => {
 
     const after = (await getStats()).length;
     expect(after).toEqual(now);
+  });
+
+  it("should add stats element only when some time passed", async () => {
+    const myIp = await getMyPublicIp();
+
+    for (let i = 0; i < 5; ++i) {
+      await api.post(`/servers/${myIp}:7777`, {
+        name: "MyServer",
+        maxPlayers: "30",
+        online: "30"
+      });
+      await api.get("/stats");
+    }
+
+    {
+      const st = await getStats();
+      expect(st[st.length - 1].PlayersOnline).toEqual("30");
+      expect(st[st.length - 1].ServersOnline).toEqual("1");
+      expect(st[st.length - 2].PlayersOnline).toEqual("3");
+      expect(st[st.length - 2].ServersOnline).toEqual("1");
+    }
+
+    LegacyController.statsUpdateRate = 0;
+
+    await api.post(`/servers/${myIp}:7777`, {
+      name: "MyServer",
+      maxPlayers: "30",
+      online: "30"
+    });
+    const st = await getStats();
+
+    expect(st[st.length - 1].PlayersOnline).toEqual("30");
+    expect(st[st.length - 1].ServersOnline).toEqual("1");
+    expect(st[st.length - 2].PlayersOnline).toEqual("30");
+    expect(st[st.length - 2].ServersOnline).toEqual("1");
+    expect(st[st.length - 3].PlayersOnline).toEqual("3");
+    expect(st[st.length - 3].ServersOnline).toEqual("1");
+
+    LegacyController.statsUpdateRate = defaultStatsUpdateRate;
   });
 });
 
