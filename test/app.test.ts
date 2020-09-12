@@ -1,19 +1,33 @@
 import { createConnection, getManager, Repository } from "typeorm";
 import Axios, { AxiosInstance } from "axios";
+import * as https from "https";
+import * as parseCsv from "csv-parse/lib/sync";
+import * as fs from "fs";
 
 import { entities } from "../src/models";
 import { App } from "../src/app";
 import { User, VERIFICATION_EXPIRES } from "../src/models/user";
 import { getConfig } from "../src/cfg";
 import { hashString } from "../src/utils/hashString";
+import {
+  latestVersion,
+  LegacyController,
+  defaultServerTimeout
+} from "../src/v1/legacyController";
+import { StatsElement, StatsManager } from "../src/utils/statsManager";
+import { getMyPublicIp } from "../src/utils/publicIp";
+import { prefix } from "../src/utils/statsManager";
+import { makeStatsElement } from "../src/utils/makeStatsElement";
 
 const testPort = 7777;
+const statsCsvPath = "./temp.csv";
 
 let app: App;
 let api: AxiosInstance;
 let users: Repository<User>;
 
 beforeEach(async () => {
+  fs.writeFileSync(statsCsvPath, prefix);
   const connection = await createConnection({
     type: "postgres",
     url: getConfig().DB_URL + "_test",
@@ -22,7 +36,10 @@ beforeEach(async () => {
     entities: entities,
     name: "conn" + Math.random().toString()
   });
-  app = new App(connection, { enableLogging: false });
+  app = new App(connection, {
+    enableLogging: false,
+    statsCsvPath
+  });
   await app.listen(testPort);
 
   api = Axios.create({
@@ -60,12 +77,175 @@ const createTestUser = async (): Promise<TestUserInfo> => {
   return { user };
 };
 
+const getStats = async (): Promise<Array<StatsElement>> => {
+  const v: string = (await api.get("/stats")).data;
+
+  const res: Array<StatsElement> = parseCsv(v, {
+    columns: true,
+    skip_empty_lines: true
+  });
+  return res;
+};
+
+describe("StatsManager", () => {
+  it("should throw if file doesn't exist", async () => {
+    expect(() => new StatsManager("!@()*#&")).toThrowError(
+      "'!@()*#&' does not exist"
+    );
+  });
+
+  it("should throw if file has invalid format", async () => {
+    expect(() => new StatsManager("package.json")).toThrowError(
+      `'package.json' does not have required prefix`
+    );
+  });
+
+  it("should throw if file has invalid format", async () => {
+    const statsManager = new StatsManager(statsCsvPath);
+    expect(statsManager.get().length).toEqual(0);
+
+    statsManager.add({ Time: "x", ServersOnline: "y", PlayersOnline: "z" });
+
+    const data = statsManager.get();
+
+    expect(data).toEqual([
+      { Time: "x", ServersOnline: "y", PlayersOnline: "z" }
+    ]);
+
+    expect(
+      parseCsv(fs.readFileSync(statsCsvPath, "utf-8"), {
+        columns: true,
+        skip_empty_lines: true
+      })
+    ).toEqual([{ Time: "x", ServersOnline: "y", PlayersOnline: "z" }]);
+  });
+});
+
+describe("makeStatsElement", () => {
+  it("should correctly compress server data into the stats element", async () => {
+    const date = new Date(0);
+    expect(makeStatsElement(date, [])).toEqual({
+      Time: "1970/01/01 00:00:00",
+      PlayersOnline: "0",
+      ServersOnline: "0"
+    });
+
+    expect(makeStatsElement(date, [{ online: 1 }, { online: 1000 }])).toEqual({
+      Time: "1970/01/01 00:00:00",
+      PlayersOnline: "1001",
+      ServersOnline: "2"
+    });
+  });
+});
+
 describe("Backward compatibility", () => {
   it("should act like /v1 prefix when no prefix specified", async () => {
     const first = (await api.get("/hello")).data;
     const second = (await api.get("/v1/hello")).data;
     expect(first).toEqual("HELLO WORLD");
     expect(second).toEqual("HELLO WORLD");
+  });
+});
+
+describe("Legacy routes", () => {
+  it("should provide correct download url", async () => {
+    const downloadUrl: string = (await api.get("/skymp_link/5.0.6.1")).data;
+
+    expect(downloadUrl.startsWith("https://github.com")).toBeTruthy();
+
+    const headers: Record<string, unknown> = await new Promise((r) => {
+      https.get(downloadUrl, (res) => {
+        https.get(res.headers["location"] as string, (result) => {
+          r(result.headers);
+        });
+      });
+    });
+
+    expect(headers["content-length"]).toEqual("84684972");
+  });
+
+  it("should provide correct skse download url", async () => {
+    const downloadUrl: string = (
+      await api.get("/skse_link/5.maybe.incorrect.version")
+    ).data;
+    expect(downloadUrl).toEqual(
+      "https://skse.silverlock.org/beta/skse64_2_00_19.7z"
+    );
+  });
+
+  it("should return lastest version", async () => {
+    const v: string = (await api.get("/latest_version")).data;
+    expect(v).toEqual(latestVersion);
+  });
+
+  it("should return correct statistics", async () => {
+    const res = await getStats();
+
+    expect(
+      res.findIndex(
+        (x) =>
+          x.PlayersOnline === "0" &&
+          x.ServersOnline === "1" &&
+          x.Time === "2020/07/14 12:06:03"
+      )
+    ).toEqual(0);
+    expect(
+      res.findIndex(
+        (x) =>
+          x.PlayersOnline === "3" &&
+          x.ServersOnline === "1" &&
+          x.Time === "2020/09/11 22:07:17"
+      )
+    ).toEqual(83108);
+  });
+
+  it("should be able to update server data", async () => {
+    const myIp = await getMyPublicIp();
+
+    expect((await api.get("/servers")).data).toEqual([]);
+
+    const res = await api.post(`/servers/${myIp}:7777`, {
+      name: "MyServer",
+      maxPlayers: "30",
+      online: "1"
+    });
+    expect(res.data).toEqual("Nice");
+
+    expect((await api.get("/servers")).data).toEqual([
+      {
+        name: "MyServer",
+        maxPlayers: 30,
+        ip: myIp,
+        port: 7777,
+        online: 1
+      }
+    ]);
+
+    LegacyController.serverTimeout = 0;
+    expect((await api.get("/servers")).data).toEqual([]);
+    LegacyController.serverTimeout = defaultServerTimeout;
+  });
+
+  it("should update stats when servers update their data", async () => {
+    const myIp = await getMyPublicIp();
+    const was = (await getStats()).length;
+
+    await api.post(`/servers/${myIp}:7777`, {
+      name: "MyServer",
+      maxPlayers: "30",
+      online: "1"
+    });
+
+    const now = (await getStats()).length;
+
+    expect(now - was).toEqual(1);
+
+    const st = await getStats();
+    expect(st[st.length - 1].PlayersOnline).toEqual("1");
+    expect(st[st.length - 1].ServersOnline).toEqual("1");
+
+    const after = (await getStats()).length;
+    expect(after).toEqual(now);
   });
 });
 

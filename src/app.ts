@@ -7,19 +7,23 @@ import { Connection } from "typeorm";
 import * as Router from "koa-router";
 
 import { getRouter } from "./v1";
+import { StatsManager } from "./utils/statsManager";
 
 export interface AppOptions {
   enableLogging: boolean;
+  statsCsvPath: string;
 }
 
 export class App {
   constructor(private connection: Connection, options: AppOptions) {
+    this.statsManager = new StatsManager(options.statsCsvPath);
+
     this.app = new Koa()
       .use(helmet())
       .use(cors())
       .use(koaBody({ multipart: true }));
-
-    this.app.context["connectionName"] = connection.name;
+    this.app.context["connectionName"] = this.connection.name;
+    this.app.context["statsManager"] = this.statsManager;
 
     if (options.enableLogging) this.app.use(logger());
 
@@ -52,4 +56,5 @@ export class App {
 
   private app: Koa;
   private onClose = new Array<() => void>();
+  private statsManager: StatsManager;
 }
