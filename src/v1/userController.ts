@@ -4,15 +4,16 @@ import { getManager, Repository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 
 import { hashString } from "../utils/hashString";
-import { User } from "../models/user";
-import { sendSignupSuccess } from "../emails";
+import { User, VERIFICATION_EXPIRES } from "../models/user";
+import { sendSignupSuccess, sendSignupResetPin } from "../emails";
 import { randomString } from "../utils/random-string";
 
 export class UserController {
   static getRouter(): Router {
     return new Router()
       .post("/users", UserController.createUser)
-      .post("/users/:id/verify", UserController.verify);
+      .post("/users/:id/verify", UserController.verify)
+      .post("/users/:id/reset-pin", UserController.resetPin);
   }
 
   static getRepository(ctx: Context | Router.RouterContext): Repository<User> {
@@ -80,7 +81,6 @@ export class UserController {
         verificationPin,
         password,
         hasVerifiedEmail: false
-        //verificationPinExpiresAt: MoreThan(new Date().getTime())
       },
       {
         hasVerifiedEmail: true
@@ -92,6 +92,46 @@ export class UserController {
       ctx.status = 200;
     } else {
       ctx.throw(404);
+    }
+  }
+
+  static async resetPin(ctx: Context | Router.RouterContext): Promise<void> {
+    const userRepository = UserController.getRepository(ctx);
+
+    let id = +ctx.params.id;
+    if (!Number.isInteger(id)) id = -1;
+
+    const email = ctx.request.body.email;
+
+    const password = await hashString(
+      "" + ctx.request.body.password,
+      "" + email
+    );
+
+    const user = await userRepository.findOne({ id, email, password });
+
+    if (!user) {
+      ctx.throw(400, "User not found with like this id, email and password");
+    } else if (user.hasVerifiedEmail) {
+      ctx.throw(400, "User has verified email");
+    } else if (
+      new Date().getTime() - user.verificationPinSentAt.getTime() >
+      VERIFICATION_EXPIRES
+    ) {
+      ctx.throw(400, "Code is expired");
+    } else {
+      const newPin = randomString(6);
+
+      // Maybe override EntityRepository method save ???
+      user.verificationPin = await hashString(newPin, user.email);
+
+      user.verificationPinSentAt = new Date();
+
+      await userRepository.save(user);
+
+      ctx.status = 200;
+
+      sendSignupResetPin(user.email, user.name, newPin);
     }
   }
 }

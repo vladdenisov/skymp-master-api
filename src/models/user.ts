@@ -9,11 +9,11 @@ import {
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 
-import { sendSignupVerifyCode } from "../emails";
+import { sendSignupVerifyPin } from "../emails";
 
 import { hashString } from "../utils/hashString";
 
-export const VERIFICATION_EXPIRES_TIME_VALUE = 3600 * 4 * 1000; // 4h
+export const VERIFICATION_EXPIRES = 2 * 60 * 1000;
 
 @Entity("users")
 export class User {
@@ -48,13 +48,6 @@ export class User {
   verificationPin!: string;
 
   @Column("timestamp", {
-    name: "verification_pin_expires_at",
-    nullable: true,
-    default: null
-  })
-  verificationPinExpiresAt!: Date;
-
-  @Column("timestamp", {
     name: "verification_pin_sent_at",
     nullable: true,
     default: null
@@ -85,10 +78,7 @@ export class User {
     const pin = this.verificationPin;
     this.verificationPin = await hashString(pin, this.email);
     this.verificationPinSentAt = new Date();
-    this.verificationPinExpiresAt = new Date(
-      this.verificationPinSentAt.getTime() + VERIFICATION_EXPIRES_TIME_VALUE
-    );
 
-    await sendSignupVerifyCode(this.email, this.name, pin);
+    await sendSignupVerifyPin(this.email, this.name, pin);
   }
 }

@@ -3,9 +3,8 @@ import Axios, { AxiosInstance } from "axios";
 
 import { entities } from "../src/models";
 import { App } from "../src/app";
-import { User } from "../src/models/user";
+import { User, VERIFICATION_EXPIRES } from "../src/models/user";
 import { getConfig } from "../src/cfg";
-import { VERIFICATION_EXPIRES_TIME_VALUE } from "../src/models/user";
 import { hashString } from "../src/utils/hashString";
 
 const testPort = 7777;
@@ -49,7 +48,6 @@ const createTestUser = async (): Promise<TestUserInfo> => {
   usr.email = "lelele@test.be";
   usr.password = "jejeje";
   usr.verificationPin = "qwerty";
-  usr.verificationPinExpiresAt = new Date(Date.now() + 1000000);
   usr.verificationPinSentAt = new Date();
   await users.save(usr);
 
@@ -93,14 +91,6 @@ describe("User system", () => {
       expect(Math.abs(Date.now() - +user.verificationPinSentAt)).toBeLessThan(
         1000
       );
-
-      expect(
-        Math.abs(
-          Date.now() +
-            VERIFICATION_EXPIRES_TIME_VALUE -
-            +user.verificationPinExpiresAt
-        )
-      ).toBeLessThan(1000);
 
       expect(user.hasVerifiedEmail).toBeFalsy();
     }
@@ -193,5 +183,68 @@ describe("User system", () => {
       })
     ).rejects.toThrow();
     expect(await users.count({})).toEqual(1);
+  });
+
+  it("should be able to recreate pin when valid input data", async () => {
+    const { user } = await createTestUser();
+    const prevPin = user.verificationPin;
+
+    const res = await api.post(`/users/${user.id}/reset-pin`, {
+      email: user.email,
+      password: "jejeje"
+    });
+    expect(res.status).toEqual(200);
+    expect(await users.count({ verificationPin: prevPin })).toEqual(0);
+
+    const updatedUser = await users.findOne({ id: user.id });
+    expect(updatedUser).not.toBeFalsy();
+    if (updatedUser) {
+      expect(
+        await users.count({
+          verificationPin: updatedUser.verificationPin
+        })
+      ).toEqual(1);
+    }
+  });
+
+  it("should fail to reset pin with same input data", async () => {
+    const { user } = await createTestUser();
+
+    await expect(
+      api.post(`/users/${user.id}/reset-pin`, {
+        email: user.email,
+        password: "BAD_PASSWORD"
+      })
+    ).rejects.toThrow();
+  });
+
+  it("should fail to reset pin for user has verified email", async () => {
+    const { user } = await createTestUser();
+    user.hasVerifiedEmail = true;
+
+    await users.save(user);
+
+    await expect(
+      api.post(`/users/${user.id}/reset-pin`, {
+        email: user.email,
+        password: "jejeje"
+      })
+    ).rejects.toThrow();
+  });
+
+  it("should fail to reset pin when code is expired", async () => {
+    const { user } = await createTestUser();
+    user.verificationPinSentAt = new Date(
+      new Date().getTime() - VERIFICATION_EXPIRES - 1000
+    );
+
+    await users.save(user);
+
+    await expect(
+      api.post(`/users/${user.id}/reset-pin`, {
+        email: user.email,
+        password: "jejeje"
+      })
+    ).rejects.toThrow();
   });
 });
