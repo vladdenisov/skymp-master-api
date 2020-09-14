@@ -115,21 +115,17 @@ export class UserController {
     ctx: Context | Router.RouterContext,
     next: () => Promise<void>
   ): Promise<void> {
-    await Passport.authenticate("local", function (err, user) {
-      if (user == false) {
-        ctx.body = "Login failed";
-        console.log(err);
-      } else {
-        const payload = {
-          id: user.id,
-          hasVerifiedEmail: user.hasVerifiedEmail,
-          email: user.email,
-          roles: user.roles
-        };
-        const token = jwt.sign(payload, config.JWT_SECRET);
-
-        ctx.body = { user: user.email, token: "JWT " + token };
-      }
+    await Passport.authenticate("local", (_err, user) => {
+      if (!user) return ctx.throw(401, "Login failed");
+      const { id, hasVerifiedEmail, email, roles } = user;
+      const payload = {
+        id,
+        hasVerifiedEmail,
+        email,
+        roles
+      };
+      const token = `JWT ${jwt.sign(payload, config.JWT_SECRET)}`;
+      ctx.body = { token };
     })(ctx, next);
   }
 

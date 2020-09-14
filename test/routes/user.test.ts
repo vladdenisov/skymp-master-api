@@ -32,6 +32,30 @@ describe("User system", () => {
     }
   });
 
+  it("should be able to login into an existing account", async () => {
+    const { api, createTestUser, users } = TestUtilsProvider;
+    const { user } = await createTestUser();
+    user.hasVerifiedEmail = true;
+    await users.save(user);
+
+    await expect(api.post("/users/login", {})).rejects.toThrowError(
+      "Request failed with status code 401"
+    );
+    await expect(
+      api.post("/users/login", {
+        email: "lelele@test.be",
+        password: "ddddasdasd"
+      })
+    ).rejects.toThrowError("Request failed with status code 401");
+
+    const res = await api.post("/users/login", {
+      email: "lelele@test.be",
+      password: "jejeje"
+    });
+    expect(Object.keys(res.data)).toEqual(["token"]);
+    expect(`${res.data.token}`.startsWith("JWT ")).toBeTruthy();
+  });
+
   it("should throw 404 when trying to verify email of unexisting user", async () => {
     const { api } = TestUtilsProvider;
     for (const id in ["yay", "1000000000", "-1"])

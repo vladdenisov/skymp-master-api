@@ -7,7 +7,7 @@ import { prefix, StatsElement } from "./statsManager";
 import { entities } from "../models";
 import { App } from "../app";
 import { User } from "../models/user";
-import { getConfig } from "../cfg";
+import { config } from "../cfg";
 import { hashString } from "./hashString";
 
 export interface TestUserInfo {
@@ -74,7 +74,7 @@ export class TestUtilsProvider {
     fs.writeFileSync(TestUtilsProvider.statsCsvPath, prefix);
     const connection = await createConnection({
       type: "postgres",
-      url: getConfig().DB_URL + "_test",
+      url: config.DB_URL + "_test",
       logging: false,
       synchronize: true,
       entities: entities,
