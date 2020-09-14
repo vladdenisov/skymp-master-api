@@ -2,9 +2,7 @@ import * as path from "path";
 import * as nodemailer from "nodemailer";
 import * as EmailTemplates from "email-templates";
 
-import { getConfig } from "../cfg";
-
-const config = getConfig();
+import { config } from "../cfg";
 
 const rootViews = path.join(__dirname, "templates");
 

@@ -8,6 +8,8 @@ import * as Router from "koa-router";
 
 import { getRouter } from "./v1";
 import { StatsManager } from "./utils/statsManager";
+import { passportInit } from "./utils/passport-init";
+import { errorHandler } from "./middlewares/error-handler";
 
 export interface AppOptions {
   enableLogging: boolean;
@@ -21,7 +23,8 @@ export class App {
     this.app = new Koa()
       .use(helmet())
       .use(cors())
-      .use(koaBody({ multipart: true }));
+      .use(koaBody({ multipart: true }))
+      .use(passportInit(this.connection.name));
     this.app.context["connectionName"] = this.connection.name;
     this.app.context["statsManager"] = this.statsManager;
 
@@ -33,7 +36,10 @@ export class App {
     })
       .use(v1.routes())
       .use("/v1", v1.routes());
-    this.app.use(router.routes()).use(router.allowedMethods());
+    this.app
+      .use(errorHandler)
+      .use(router.routes())
+      .use(router.allowedMethods());
 
     this.onClose.push(() => connection.close());
   }

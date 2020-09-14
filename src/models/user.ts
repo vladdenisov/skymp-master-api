@@ -15,6 +15,11 @@ import { hashString } from "../utils/hashString";
 
 export const VERIFICATION_EXPIRES = 2 * 60 * 1000;
 
+export enum Roles {
+  user = "user",
+  admin = "admin"
+}
+
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn("increment")
@@ -53,6 +58,18 @@ export class User {
     default: null
   })
   verificationPinSentAt!: Date;
+
+  /*
+  Not work with enum
+  https://github.com/typeorm/typeorm/issues/4350
+  */
+  @Column("varchar", {
+    name: "roles",
+    default: `{${Roles.user}}`,
+    nullable: false,
+    array: true
+  })
+  roles!: Roles[];
 
   @CreateDateColumn({
     name: "create_at",

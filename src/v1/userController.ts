@@ -8,12 +8,19 @@ import { User, VERIFICATION_EXPIRES } from "../models/user";
 import { sendSignupSuccess, sendSignupResetPin } from "../emails";
 import { randomString } from "../utils/random-string";
 
+import * as Passport from "koa-passport";
+
+import * as jwt from "jsonwebtoken";
+
+import { config } from "../cfg";
+
 export class UserController {
   static getRouter(): Router {
     return new Router()
       .post("/users", UserController.createUser)
       .post("/users/:id/verify", UserController.verify)
-      .post("/users/:id/reset-pin", UserController.resetPin);
+      .post("/users/:id/reset-pin", UserController.resetPin)
+      .post("/users/login", UserController.login);
   }
 
   static getRepository(ctx: Context | Router.RouterContext): Repository<User> {
@@ -90,9 +97,40 @@ export class UserController {
     if (updateResult.affected) {
       await sendSignupSuccess(ctx.request.body.email);
       ctx.status = 200;
+      const token = jwt.sign(
+        {
+          id: id,
+          role: "non-role",
+          email: ctx.request.body.email
+        },
+        config.JWT_SECRET
+      );
+      ctx.body = { token: "JWT" + token };
     } else {
       ctx.throw(404);
     }
+  }
+
+  static async login(
+    ctx: Context | Router.RouterContext,
+    next: () => Promise<void>
+  ): Promise<void> {
+    await Passport.authenticate("local", function (err, user) {
+      if (user == false) {
+        ctx.body = "Login failed";
+        console.log(err);
+      } else {
+        const payload = {
+          id: user.id,
+          hasVerifiedEmail: user.hasVerifiedEmail,
+          email: user.email,
+          roles: user.roles
+        };
+        const token = jwt.sign(payload, config.JWT_SECRET);
+
+        ctx.body = { user: user.email, token: "JWT " + token };
+      }
+    })(ctx, next);
   }
 
   static async resetPin(ctx: Context | Router.RouterContext): Promise<void> {

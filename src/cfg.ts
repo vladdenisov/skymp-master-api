@@ -9,7 +9,7 @@ export interface Config {
   STATS_CSV_PATH: string;
 }
 
-export const getConfig = (): Config => {
+const getConfig = (): Config => {
   const cfgPath = "./src/config.json";
   const exampleConfig = fs.readFileSync("./src/config-example.json", "utf-8");
   if (!fs.existsSync(cfgPath)) fs.writeFileSync(cfgPath, exampleConfig);
@@ -18,3 +18,5 @@ export const getConfig = (): Config => {
     throw new Error("Please fill config.json with valid values");
   return cfg;
 };
+
+export const config = getConfig();

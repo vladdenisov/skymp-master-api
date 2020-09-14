@@ -1,12 +1,10 @@
 import { createConnection } from "typeorm";
 import * as fs from "fs";
 
-import { getConfig } from "cfg";
+import { config } from "cfg";
 import { App } from "app";
 import { entities, subscribers } from "models";
 import { prefix } from "utils/statsManager";
-
-const config = getConfig();
 
 const getStatsCsvPath = () => {
   let statsCsvPath = config.STATS_CSV_PATH;
