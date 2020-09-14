@@ -19,6 +19,10 @@ let api_: AxiosInstance;
 let users_: Repository<User>;
 let testPort_ = 7777;
 
+export interface CreateTestUserOptions {
+  hasVerifiedEmail: boolean;
+}
+
 export class TestUtilsProvider {
   static get app(): App {
     return app_;
@@ -40,9 +44,11 @@ export class TestUtilsProvider {
     return "./temp.csv";
   }
 
-  static async createTestUser(): Promise<TestUserInfo> {
+  static async createTestUser(
+    options: CreateTestUserOptions = { hasVerifiedEmail: false }
+  ): Promise<TestUserInfo> {
     const usr: User = new User();
-    usr.hasVerifiedEmail = false;
+    usr.hasVerifiedEmail = options.hasVerifiedEmail;
     usr.name = "igor";
     usr.email = "lelele@test.be";
     usr.password = "jejeje";

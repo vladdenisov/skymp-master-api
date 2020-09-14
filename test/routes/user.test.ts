@@ -32,11 +32,9 @@ describe("User system", () => {
     }
   });
 
-  it("should be able to login into an existing account", async () => {
-    const { api, createTestUser, users } = TestUtilsProvider;
-    const { user } = await createTestUser();
-    user.hasVerifiedEmail = true;
-    await users.save(user);
+  it("should fail to login with bad credentials", async () => {
+    const { api, createTestUser } = TestUtilsProvider;
+    await createTestUser({ hasVerifiedEmail: true });
 
     await expect(api.post("/users/login", {})).rejects.toThrowError(
       "Request failed with status code 401"
@@ -47,6 +45,11 @@ describe("User system", () => {
         password: "ddddasdasd"
       })
     ).rejects.toThrowError("Request failed with status code 401");
+  });
+
+  it("should be able to login into an existing account", async () => {
+    const { api, createTestUser } = TestUtilsProvider;
+    await createTestUser({ hasVerifiedEmail: true });
 
     const res = await api.post("/users/login", {
       email: "lelele@test.be",
@@ -101,10 +104,8 @@ describe("User system", () => {
   });
 
   it("should throw 404 when trying to verify email when email is already verified", async () => {
-    const { users, api, createTestUser } = TestUtilsProvider;
-    const { user } = await createTestUser();
-    user.hasVerifiedEmail = true;
-    await users.save(user);
+    const { api, createTestUser } = TestUtilsProvider;
+    const { user } = await createTestUser({ hasVerifiedEmail: true });
     await expect(
       api.post(`/users/${user.id}/verify`, {
         pin: "qwerty",
