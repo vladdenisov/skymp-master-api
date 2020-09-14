@@ -8,6 +8,9 @@ jobs:
     env:
       G_USERNAME: ${{ secrets.G_USERNAME }}
       G_PASSWORD: ${{ secrets.G_PASSWORD }}
+      DB_URL: ${{ secrets.DB_URL }}
+      EMAIL_USER: ${{ secrets.EMAIL_USER }}
+      EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
     steps:
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
@@ -25,9 +28,17 @@ jobs:
             git remote add origin https://$G_USERNAME:$G_PASSWORD@github.com/$GITHUB_REPOSITORY.git
             git fetch origin $GITHUB_SHA
             git reset --hard FETCH_HEAD
+            echo -n '{ "PORT": 3000, "JWT_SECRET": "your-secret-whatever?", "DB_URL": "' > cfg
+            echo -n $DB_URL >> cfg
+            echo -n '", "EMAIL_USER": "' >> cfg
+            echo -n $EMAIL_USER >> cfg 
+            echo -n '", "EMAIL_PASS": "' >> cfg
+            echo -n $EMAIL_PASS >> cfg 
+            echo -n '", "STATS_CSV_PATH": "/csv/stats.csv" }' >> cfg
+            docker rm -f skymp-master-api skymp-master-api-nginx
             docker-compose up -d --build
             docker rmi $(docker images -f "dangling=true" -q) --force || true
             rm -rf $GITHUB_SHA
-          envs: GITHUB_SHA,GITHUB_REPOSITORY,G_USERNAME,G_PASSWORD,MASTER_URL
+          envs: GITHUB_SHA,GITHUB_REPOSITORY,G_USERNAME,G_PASSWORD,MASTER_URL,DB_URL,EMAIL_USER,EMAIL_PASS
           script_stop: true
           command_timeout: 6h

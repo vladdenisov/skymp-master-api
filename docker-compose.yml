@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  api:
+  skymp-master-api:
     build:
       context: .
       dockerfile: dockerfile.node
@@ -9,8 +9,10 @@ services:
     restart: always
     networks:
       - nginx-network
+    volumes:
+      - ~/skymp5-master/csv:/csv
 
-  nginx-proxy:
+  skymp-master-api-nginx:
     build:
       context: .
       dockerfile: dockerfile.nginx
@@ -20,7 +22,7 @@ services:
     container_name: skymp-master-api-nginx
     restart: always
     depends_on:
-      - api
+      - skymp-master-api
     volumes:
       - ./static:/usr/share/nginx/html
       - ~/skymp5-master/data/certs:/etc/nginx/certs
