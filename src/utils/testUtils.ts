@@ -19,10 +19,6 @@ let api_: AxiosInstance;
 let users_: Repository<User>;
 let testPort_ = 7777;
 
-export interface CreateTestUserOptions {
-  hasVerifiedEmail: boolean;
-}
-
 export class TestUtilsProvider {
   static get app(): App {
     return app_;
@@ -45,15 +41,18 @@ export class TestUtilsProvider {
   }
 
   static async createTestUser(
-    options: CreateTestUserOptions = { hasVerifiedEmail: false }
+    options: Partial<User> = { hasVerifiedEmail: false }
   ): Promise<TestUserInfo> {
     const usr: User = new User();
-    usr.hasVerifiedEmail = options.hasVerifiedEmail;
+    usr.hasVerifiedEmail = false;
     usr.name = "igor";
     usr.email = "lelele@test.be";
     usr.password = "jejeje";
     usr.verificationPin = "qwerty";
     usr.verificationPinSentAt = new Date();
+
+    Object.keys(options).forEach((key) => (usr[key] = options[key]));
+
     await TestUtilsProvider.users.save(usr);
 
     const user = await TestUtilsProvider.users.findOne({

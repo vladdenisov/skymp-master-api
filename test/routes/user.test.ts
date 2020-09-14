@@ -1,8 +1,17 @@
 import { TestUtilsProvider } from "../../src/utils/testUtils";
-import { VERIFICATION_EXPIRES } from "../../src/models/user";
+import { User, Roles, VERIFICATION_EXPIRES } from "../../src/models/user";
 
 beforeEach(TestUtilsProvider.beforeEach);
 afterEach(TestUtilsProvider.afterEach);
+
+const loginAsTestUser = async (user: User): Promise<string> => {
+  const { api } = TestUtilsProvider;
+  const res = await api.post("/users/login", {
+    email: user.email,
+    password: "jejeje"
+  });
+  return res.data.token as string;
+};
 
 describe("User system", () => {
   it("should be able to create a new account", async () => {
@@ -57,6 +66,33 @@ describe("User system", () => {
     });
     expect(Object.keys(res.data)).toEqual(["token"]);
     expect(`${res.data.token}`.startsWith("JWT ")).toBeTruthy();
+  });
+
+  it("should be able to use admin-only routes with admin access", async () => {
+    const { api, createTestUser } = TestUtilsProvider;
+    const { user } = await createTestUser({
+      hasVerifiedEmail: true,
+      roles: [Roles.admin]
+    });
+    const token = await loginAsTestUser(user);
+
+    const res = await api.get("/secure/admin", {
+      headers: { Authorization: token }
+    });
+    expect(res.data).toEqual("SECURE ROUTE");
+  });
+
+  it("should fail to use admin-only routes without access", async () => {
+    const { api, createTestUser } = TestUtilsProvider;
+    const { user } = await createTestUser({
+      hasVerifiedEmail: true,
+      roles: []
+    });
+    const token = await loginAsTestUser(user);
+
+    await expect(
+      api.get("/secure/admin", { headers: { Authorization: token } })
+    ).rejects.toThrowError("Request failed with status code 403");
   });
 
   it("should throw 404 when trying to verify email of unexisting user", async () => {
