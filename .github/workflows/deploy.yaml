@@ -1,0 +1,33 @@
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      G_USERNAME: ${{ secrets.G_USERNAME }}
+      G_PASSWORD: ${{ secrets.G_PASSWORD }}
+    steps:
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            mkdir -p skymp-master-api
+            cd skymp-master-api
+            mkdir -p $GITHUB_SHA && cd $GITHUB_SHA
+            rm -rf .git
+            git init
+            git remote add origin https://$G_USERNAME:$G_PASSWORD@github.com/$GITHUB_REPOSITORY.git
+            git fetch origin $GITHUB_SHA
+            git reset --hard FETCH_HEAD
+            docker-compose up -d --build
+            docker rmi $(docker images -f "dangling=true" -q) --force || true
+            rm -rf $GITHUB_SHA
+          envs: GITHUB_SHA,GITHUB_REPOSITORY,G_USERNAME,G_PASSWORD,MASTER_URL
+          script_stop: true
+          command_timeout: 6h

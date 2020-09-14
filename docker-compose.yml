@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: dockerfile.node
+    container_name: skymp-master-api
+    restart: always
+    networks:
+      - nginx-network
+
+  nginx-proxy:
+    build:
+      context: .
+      dockerfile: dockerfile.nginx
+    ports:
+      - 80:80
+      - 443:443
+    container_name: skymp-master-api-nginx
+    restart: always
+    depends_on:
+      - api
+    volumes:
+      - ./static:/usr/share/nginx/html
+      - ~/skymp5-master/data/certs:/etc/nginx/certs
+    networks:
+      - nginx-network
+
+networks:
+  nginx-network:
+    driver: bridge
