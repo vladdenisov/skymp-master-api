@@ -1,0 +1,37 @@
+on:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DNOHUB_USERNAME: ${{ secrets.DNOHUB_USERNAME }}
+      DNOHUB_PASSWORD: ${{ secrets.DNOHUB_PASSWORD }}
+      MASTER_URL: ${{ secrets.MASTER_URL }}
+    services:
+      db:
+        image: postgres:11
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+        env:
+          POSTGRES_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - uses: schdck/create-env-json@v1
+        id: create-env
+        with:
+          file-name: "cfg"
+          PORT: 3000
+          JWT_SECRET: "your-secret-whatever?"
+          DB_URL: "postgres://postgres:postgres@localhost:5432/postgres"
+          IS_GITHUB_ACTION: "true"
+      - run: npm install
+      - run: npm run lint
+      - run: mv cfg src/config.json && npm run test
