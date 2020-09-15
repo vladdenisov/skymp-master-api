@@ -12,14 +12,23 @@ export const withAuth = (
 ) => async (
   ctx: Context | RouterContext,
   next: () => Promise<unknown>
-): Promise<void> => {
+): Promise<void> =>
   await Passport.authenticate(Strategies.jwt, (err, user) => {
-    if (err) return ctx.throw(500, err);
-    if (!user) return ctx.throw(401, "Unauthorized");
-    if (hasVerifiedEmail && !user.hasVerifiedEmail)
-      return ctx.throw(403, "Your email not verified");
-    if (roles.length && !R.intersection(user.roles, roles).length)
-      return ctx.throw(403, "You don't have permission to access");
+    if (err) {
+      ctx.throw(500, err);
+    }
+
+    if (!user) {
+      ctx.throw(401, new Error("Unauthorized"));
+    }
+
+    if (hasVerifiedEmail && !user.hasVerifiedEmail) {
+      ctx.throw(403, new Error("Your email not verified"));
+    }
+
+    if (roles.length && !R.intersection(user.roles, roles).length) {
+      ctx.throw(403, new Error("You don't have permission to access"));
+    }
+
     next();
   })(ctx, next);
-};
