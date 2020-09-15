@@ -3,13 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   PrimaryColumn,
-  BeforeInsert,
   CreateDateColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  Repository,
+  EntityRepository
 } from "typeorm";
-import { Length, IsEmail } from "class-validator";
-
-import { sendSignupVerifyPin } from "../emails";
+import { Length, IsEmail, validate, ValidationError } from "class-validator";
 
 import { hashString } from "../utils/hashString";
 
@@ -84,18 +83,40 @@ export class User {
     default: () => "CURRENT_TIMESTAMP"
   })
   updateAt!: Date;
+}
 
-  @BeforeInsert()
-  async hashPassword(): Promise<void> {
-    this.password = await hashString(this.password, this.email);
+export interface CreateUserProps {
+  name: string;
+  email: string;
+  password: string;
+  verificationPin: string;
+}
+
+@EntityRepository(User)
+export class UserRepository extends Repository<User> {
+  async CreateAndSave(props: CreateUserProps): Promise<User | void> {
+    const user = new User();
+    user.name = props.name;
+    user.email = props.email;
+    user.password = props.password;
+    user.verificationPin = props.verificationPin;
+
+    const errors: ValidationError[] = await validate(user, {
+      skipMissingProperties: true
+    });
+
+    if (errors.length > 0) {
+      throw new Error(errors.toString());
+    }
+
+    user.password = await this.hashed(user.password, user.email);
+    user.verificationPin = await this.hashed(user.verificationPin, user.email);
+    user.verificationPinSentAt = new Date();
+
+    this.save(user);
   }
 
-  @BeforeInsert()
-  async sendVerifyPin(): Promise<void> {
-    const pin = this.verificationPin;
-    this.verificationPin = await hashString(pin, this.email);
-    this.verificationPinSentAt = new Date();
-
-    await sendSignupVerifyPin(this.email, this.name, pin);
+  hashed(field: string, email: string): Promise<string> {
+    return hashString(field, email);
   }
 }
