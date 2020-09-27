@@ -125,7 +125,7 @@ export class UserController {
         roles
       };
       const token = `JWT ${jwt.sign(payload, config.JWT_SECRET)}`;
-      ctx.body = { token };
+      ctx.body = { token, id };
     })(ctx, next);
   }
 

@@ -64,8 +64,9 @@ describe("User system", () => {
       email: "lelele@test.be",
       password: "jejeje"
     });
-    expect(Object.keys(res.data)).toEqual(["token"]);
+    expect(Object.keys(res.data)).toEqual(["token", "id"]);
     expect(`${res.data.token}`.startsWith("JWT ")).toBeTruthy();
+    expect(typeof res.data.id).toBe("number");
   });
 
   it("should be able to use admin-only routes with admin access", async () => {
