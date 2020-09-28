@@ -105,7 +105,7 @@ export class UserController {
         },
         config.JWT_SECRET
       );
-      ctx.body = { token: "JWT" + token };
+      ctx.body = { token: "JWT " + token };
     } else {
       ctx.throw(404);
     }
@@ -125,7 +125,7 @@ export class UserController {
         roles
       };
       const token = `JWT ${jwt.sign(payload, config.JWT_SECRET)}`;
-      ctx.body = { token, id };
+      ctx.body = { token, id, name: user.name };
     })(ctx, next);
   }
 

@@ -64,8 +64,9 @@ describe("User system", () => {
       email: "lelele@test.be",
       password: "jejeje"
     });
-    expect(Object.keys(res.data)).toEqual(["token", "id"]);
-    expect(`${res.data.token}`.startsWith("JWT ")).toBeTruthy();
+    expect(Object.keys(res.data)).toEqual(["token", "id", "name"]);
+    expect(`${res.data.token}`).toMatch(/JWT\s.*/);
+    expect(res.data.name).toEqual("igor");
     expect(typeof res.data.id).toBe("number");
   });
 
@@ -164,6 +165,7 @@ describe("User system", () => {
       email: "lelele@test.be"
     });
     expect(res.status).toEqual(200);
+    expect(`${res.data.token}`).toMatch(/JWT\s.*/);
     expect(await users.count({ hasVerifiedEmail: true })).toEqual(1);
   });
 
