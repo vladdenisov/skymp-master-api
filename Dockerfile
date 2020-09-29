@@ -4,5 +4,4 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 EXPOSE 3000
-COPY cfg ./src/config.json
 CMD [ "npm", "run", "start" ]

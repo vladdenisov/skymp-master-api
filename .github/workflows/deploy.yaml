@@ -5,40 +5,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      G_USERNAME: ${{ secrets.G_USERNAME }}
-      G_PASSWORD: ${{ secrets.G_PASSWORD }}
-      DB_URL: ${{ secrets.DB_URL }}
-      EMAIL_USER: ${{ secrets.EMAIL_USER }}
-      EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
     steps:
-      - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@master
+      - uses: actions/checkout@master
+      - name: Pull from ECR
+        uses: jwalton/gh-ecr-push@v1
+        continue-on-error: true
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.KEY }}
-          port: ${{ secrets.PORT }}
-          script: |
-            mkdir -p skymp-master-api
-            cd skymp-master-api
-            mkdir -p $GITHUB_SHA && cd $GITHUB_SHA
-            rm -rf .git
-            git init
-            git remote add origin https://$G_USERNAME:$G_PASSWORD@github.com/$GITHUB_REPOSITORY.git
-            git fetch origin $GITHUB_SHA
-            git reset --hard FETCH_HEAD
-            echo -n '{ "PORT": 3000, "JWT_SECRET": "your-secret-whatever?", "DB_URL": "' > cfg
-            echo -n $DB_URL >> cfg
-            echo -n '", "EMAIL_USER": "' >> cfg
-            echo -n $EMAIL_USER >> cfg 
-            echo -n '", "EMAIL_PASS": "' >> cfg
-            echo -n $EMAIL_PASS >> cfg 
-            echo -n '", "STATS_CSV_PATH": "/csv/stats.csv" }' >> cfg
-            docker rm -f skymp-master-api skymp-master-api-nginx
-            docker-compose up -d --build
-            docker rmi $(docker images -f "dangling=true" -q) --force || true
-            rm -rf $GITHUB_SHA
-          envs: GITHUB_SHA,GITHUB_REPOSITORY,G_USERNAME,G_PASSWORD,MASTER_URL,DB_URL,EMAIL_USER,EMAIL_PASS
-          script_stop: true
-          command_timeout: 6h
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: eu-west-3
+          image: skymp-master-api:latest
+          local-image: skymp-master-api
+          direction: pull
+      - run: docker build --cache-from skymp-master-api --tag skymp-master-api .
+      - name: Push to ECR
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: eu-west-3
+          local-image: skymp-master-api
+          image: skymp-master-api:latest
