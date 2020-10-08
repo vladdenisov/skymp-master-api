@@ -132,6 +132,8 @@ export class UserController {
     await Passport.authenticate("local", (_err, user) => {
       if (!user) return ctx.throw(401, "Login failed");
       const { id, hasVerifiedEmail, email, roles } = user;
+      if (!hasVerifiedEmail)
+        return ctx.throw(403, "Email address didn't verify");
       const payload = {
         id,
         hasVerifiedEmail,

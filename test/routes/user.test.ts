@@ -59,6 +59,18 @@ describe("User system", () => {
     ).rejects.toThrowError("Request failed with status code 401");
   });
 
+  it("should fail to login into non-verified account", async () => {
+    const { api, createTestUser } = TestUtilsProvider;
+    await createTestUser();
+
+    await expect(
+      api.post("/users/login", {
+        email: "lelele@test.be",
+        password: "jejeje"
+      })
+    ).rejects.toThrowError("Request failed with status code 403");
+  });
+
   it("should be able to login into an existing account", async () => {
     const { api, createTestUser } = TestUtilsProvider;
     await createTestUser({ hasVerifiedEmail: true });
