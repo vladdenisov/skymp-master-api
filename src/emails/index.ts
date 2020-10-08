@@ -35,8 +35,8 @@ const transport = nodemailer.createTransport({
     user: config.EMAIL_USER,
     pass: config.EMAIL_PASS
   },
-  host: "mail.privateemail.com",
-  port: 465
+  host: "email-smtp.eu-west-2.amazonaws.com",
+  port: 587
 });
 
 const emailObject =
@@ -46,7 +46,7 @@ const emailObject =
           root: rootViews
         },
         message: {
-          from: config.EMAIL_USER
+          from: "courier@skymp.io"
         },
         transport: transport,
         send: true
