@@ -22,7 +22,7 @@ export interface Server extends ServerOnline {
 
 const g_servers = new Map<string, Server>();
 
-export const latestVersion = "5.0.7.0";
+export const latestVersion = "5.0.7.1";
 
 export const defaultServerTimeout = 10 * 1000;
 
