@@ -103,6 +103,8 @@ export class LegacyController {
       );
     }
 
+    console.log(ctx.request.body);
+
     const server: Server = {
       ip: ip,
       port: +port,
