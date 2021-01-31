@@ -4,5 +4,7 @@
   "DB_URL": "postgres://<username>:<password>@<host-ip>:<port>/<database-name>",
   "EMAIL_USER": "your-email@example.com",
   "EMAIL_PASS": "your-password",
-  "STATS_CSV_PATH": "/path/to/stats.csv"
+  "STATS_CSV_PATH": "/path/to/stats.csv",
+  "S3_AWS_ACCESS_KEY_ID": "",
+  "S3_AWS_SECRET_ACCESS_KEY": ""
 }

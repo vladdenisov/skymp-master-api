@@ -8,6 +8,8 @@ export interface Config {
   EMAIL_PASS: string;
   STATS_CSV_PATH: string;
   IS_GITHUB_ACTION?: string;
+  S3_AWS_ACCESS_KEY_ID?: string;
+  S3_AWS_SECRET_ACCESS_KEY?: string;
 }
 
 const getConfig = (): Config => {
@@ -22,7 +24,9 @@ const getConfig = (): Config => {
       "EMAIL_USER",
       "EMAIL_PASS",
       "STATS_CSV_PATH",
-      "IS_GITHUB_ACTION"
+      "IS_GITHUB_ACTION",
+      "S3_AWS_ACCESS_KEY_ID",
+      "S3_AWS_SECRET_ACCESS_KEY"
     ].forEach((optionName) => {
       if (process.env[optionName] !== undefined) {
         config[optionName] = process.env[optionName];
