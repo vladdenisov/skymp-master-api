@@ -36,8 +36,8 @@ export class LegacyController {
   public static serverTimeout = defaultServerTimeout;
   public static statsUpdateRate = defaultStatsUpdateRate;
   public static amazonApi = new AmazonApi(
-    `${cfg.config.S3_AWS_ACCESS_KEY_ID}`,
-    `${cfg.config.S3_AWS_SECRET_ACCESS_KEY}`
+    cfg.config.S3_AWS_ACCESS_KEY_ID,
+    cfg.config.S3_AWS_SECRET_ACCESS_KEY
   );
 
   static getRouter(): Router {

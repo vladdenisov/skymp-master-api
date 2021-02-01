@@ -8,7 +8,14 @@ export interface S3Object {
 }
 
 export class AmazonApi {
-  constructor(private accessKeyId: string, private accessKey: string) {
+  constructor(private accessKeyId?: string, private accessKey?: string) {
+    if (typeof accessKey !== "string") {
+      throw new Error("Invalid accessKey - " + typeof accessKey);
+    }
+    if (typeof accessKeyId !== "string") {
+      throw new Error("Invalid accessKeyId - " + typeof accessKeyId);
+    }
+
     AWS.config.update({
       region: this.region,
       accessKeyId: this.accessKeyId,
