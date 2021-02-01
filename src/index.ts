@@ -36,3 +36,7 @@ createConnection({
   .catch((error: string) => {
     console.log("DB connection error: ", error);
   });
+
+require("child_process").exec("git rev-parse HEAD", function (_err, stdout) {
+  console.log("Last commit hash on this branch is:", stdout);
+});
