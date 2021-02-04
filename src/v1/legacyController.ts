@@ -24,8 +24,6 @@ export interface Server extends ServerOnline {
 
 const g_servers = new Map<string, Server>();
 
-export const latestVersion = "5.0.7.1";
-
 export const defaultServerTimeout = 10 * 1000;
 
 export const defaultStatsUpdateRate = 60 * 1000;
@@ -57,10 +55,22 @@ export class LegacyController {
   ): Promise<void> {
     if (!ctx.params.skympver.startsWith("5."))
       return ctx.throw(400, "Bad multiplayer version");
-    ctx.body =
-      "https://github.com/skyrim-multiplayer/skymp5-binaries/releases/download/" +
-      ctx.params.skympver +
-      "/client.zip";
+
+    const product = "skymp-client";
+    const builds = await LegacyController.amazonApi.listObjects(
+      product + "-builds"
+    );
+    const obj = builds
+      .filter((x) => x.fileName.includes(ctx.params.skympver))
+      .pop();
+    if (obj) {
+      ctx.body = obj.downloadUrl;
+    } else {
+      ctx.throw(
+        404,
+        "Unable to find skymp-client with version " + ctx.params.skympver
+      );
+    }
   }
 
   static async getSkseLink(ctx: Context | Router.RouterContext): Promise<void> {
@@ -72,7 +82,15 @@ export class LegacyController {
   static async getLatestVersion(
     ctx: Context | Router.RouterContext
   ): Promise<void> {
-    ctx.body = latestVersion;
+    const product = "skymp-client";
+    const builds = await LegacyController.amazonApi.listObjects(
+      product + "-builds"
+    );
+    if (builds.length === 0) {
+      return ctx.throw(404, "Unable to find any skymp-client builds");
+    }
+    const build = builds[0];
+    ctx.body = build.fileName.slice(product.length + 1, -3);
   }
 
   static async getStats(ctx: Context | Router.RouterContext): Promise<void> {
@@ -139,7 +157,7 @@ export class LegacyController {
   }
 
   private static async getProducts(ctx: Context | Router.RouterContext) {
-    ctx.body = ["skyrim-platform"];
+    ctx.body = ["skymp-server-lite-win32", "skymp-client", "skyrim-platform"];
   }
 
   private static async getProductInfo(ctx: Context | Router.RouterContext) {

@@ -32,8 +32,11 @@ export class AmazonApi {
       Bucket: bucket
     };
 
+    const bucketRegion =
+      "skyrim-platform-builds" === bucket ? "eu-west-2" : "eu-west-3";
+
     // Call S3 to obtain a list of the objects in the bucket
-    return await new Promise((resolve, reject) => {
+    const resUnsorted: S3Object[] = await new Promise((resolve, reject) => {
       this.s3.listObjects(bucketParams, (err, data) => {
         if (err) {
           reject(err);
@@ -49,13 +52,18 @@ export class AmazonApi {
                   lastModified: object.LastModified
                     ? object.LastModified
                     : new Date(),
-                  downloadUrl: `https://${bucket}.s3.${this.region}.amazonaws.com/${object.Key}`
+                  downloadUrl: `https://${bucket}.s3.${bucketRegion}.amazonaws.com/${object.Key}`
                 };
               })
             );
           }
         }
       });
+    });
+    return resUnsorted.sort((a, b) => {
+      if (+a.lastModified > +b.lastModified) return -1;
+      if (+a.lastModified < +b.lastModified) return 1;
+      return 0;
     });
   }
 
