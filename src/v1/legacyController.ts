@@ -90,7 +90,7 @@ export class LegacyController {
       return ctx.throw(404, "Unable to find any skymp-client builds");
     }
     const build = builds[0];
-    ctx.body = build.fileName.slice(product.length + 1, -3);
+    ctx.body = build.fileName.slice(product.length + 1, -".zip".length);
   }
 
   static async getStats(ctx: Context | Router.RouterContext): Promise<void> {
