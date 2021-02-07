@@ -76,7 +76,7 @@ export class LegacyController {
   static async getSkseLink(ctx: Context | Router.RouterContext): Promise<void> {
     if (!ctx.params.skympver.startsWith("5."))
       return ctx.throw(400, "Bad multiplayer version");
-    ctx.body = "https://skse.silverlock.org/beta/skse64_2_00_19.7z";
+    ctx.body = "https://skymp.io/skse64_2_00_19.7z";
   }
 
   static async getLatestVersion(
