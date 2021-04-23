@@ -97,10 +97,11 @@ export class LegacyController {
     const statsManager = LegacyController.getStatsManager(ctx);
     const stats = historicalStatsManager.get().concat(statsManager.get());
     let statsDump = prefix;
-    stats.forEach(
-      (element) =>
-        (statsDump += `${element.Time},${element.PlayersOnline},${element.ServersOnline}\n`)
-    );
+    stats.forEach((element) => {
+      if (!element.Time.startsWith("2021/04/04")) {
+        statsDump += `${element.Time},${element.PlayersOnline},${element.ServersOnline}\n`;
+      }
+    });
     ctx.body = statsDump;
   }
 
