@@ -101,7 +101,8 @@ export class LegacyController {
       if (
         !element.Time.startsWith("2021/04/04") &&
         !element.Time.startsWith("2021/04/05") &&
-        !element.Time.startsWith("2021/05/08")
+        !element.Time.startsWith("2021/05/08") &&
+        !element.Time.startsWith("2021/06/10")
       ) {
         statsDump += `${element.Time},${element.PlayersOnline},${element.ServersOnline}\n`;
       }
