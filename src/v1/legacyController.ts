@@ -3,7 +3,6 @@ import * as Router from "koa-router";
 import { makeStatsElement } from "../utils/makeStatsElement";
 import { cloneStructured } from "../utils/cloneStructured";
 import { prefix, StatsManager } from "../utils/statsManager";
-import { AmazonApi } from "../utils/aws";
 import * as cfg from "../cfg";
 
 const ipAndPortRegex = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[0-9]+$/;
@@ -33,10 +32,6 @@ const historicalStatsManager = new StatsManager("./data/stats0911.csv");
 export class LegacyController {
   public static serverTimeout = defaultServerTimeout;
   public static statsUpdateRate = defaultStatsUpdateRate;
-  public static amazonApi = new AmazonApi(
-    cfg.config.S3_AWS_ACCESS_KEY_ID,
-    cfg.config.S3_AWS_SECRET_ACCESS_KEY
-  );
 
   static getRouter(): Router {
     return new Router()
@@ -56,21 +51,10 @@ export class LegacyController {
     if (!ctx.params.skympver.startsWith("5."))
       return ctx.throw(400, "Bad multiplayer version");
 
-    const product = "skymp-client";
-    const builds = await LegacyController.amazonApi.listObjects(
-      product + "-builds"
-    );
-    const obj = builds
-      .filter((x) => x.fileName.includes(ctx.params.skympver))
-      .pop();
-    if (obj) {
-      ctx.body = obj.downloadUrl;
-    } else {
-      ctx.throw(
-        404,
-        "Unable to find skymp-client with version " + ctx.params.skympver
-      );
-    }
+    // We are in process of migration from AWS
+    // TODO: Change to GitHub
+    ctx.body =
+      "https://skymp-client-builds.s3.eu-west-3.amazonaws.com/skymp-client-5.1.0.2-46-g4b744e0.zip";
   }
 
   static async getSkseLink(ctx: Context | Router.RouterContext): Promise<void> {
@@ -82,15 +66,9 @@ export class LegacyController {
   static async getLatestVersion(
     ctx: Context | Router.RouterContext
   ): Promise<void> {
-    const product = "skymp-client";
-    const builds = await LegacyController.amazonApi.listObjects(
-      product + "-builds"
-    );
-    if (builds.length === 0) {
-      return ctx.throw(404, "Unable to find any skymp-client builds");
-    }
-    const build = builds[0];
-    ctx.body = build.fileName.slice(product.length + 1, -".zip".length);
+    // We are in process of migration from AWS
+    // TODO: Change to actual version
+    ctx.body = "5.1.0.2-46-g4b744e0";
   }
 
   static async getStats(ctx: Context | Router.RouterContext): Promise<void> {
@@ -162,16 +140,15 @@ export class LegacyController {
     ctx.body = "Nice";
   }
 
+  // TODO: Remove this. SkyMP Nightly is going to be removed
   private static async getProducts(ctx: Context | Router.RouterContext) {
-    ctx.body = ["skymp-server-lite-win32", "skymp-client", "skyrim-platform"];
+    ctx.body = [];
   }
 
+  // TODO: Remove this. SkyMP Nightly is going to be removed
   private static async getProductInfo(ctx: Context | Router.RouterContext) {
-    const builds = await LegacyController.amazonApi.listObjects(
-      ctx.params.product + "-builds"
-    );
     ctx.body = {
-      builds
+      builds: []
     };
   }
 
