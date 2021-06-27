@@ -72,7 +72,9 @@ export class LegacyController {
 
   static async getStats(ctx: Context | Router.RouterContext): Promise<void> {
     const statsManager = LegacyController.getStatsManager(ctx);
-    const stats = historicalStatsManager.get().concat(statsManager.get());
+    const stats = statsManager.get().length
+      ? historicalStatsManager.get().concat(statsManager.get())
+      : [];
     let statsDump = prefix;
     stats.forEach((element) => {
       if (
