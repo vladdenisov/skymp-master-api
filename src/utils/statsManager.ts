@@ -12,8 +12,16 @@ export interface StatsElement {
 }
 
 export class StatsManager {
-  constructor(private csvPath: string) {
-    if (!fs.existsSync(csvPath)) throw new Error(`'${csvPath}' does not exist`);
+  constructor(private csvPath: string | undefined) {
+    if (!csvPath) {
+      console.log(
+        `csvPath is ${csvPath}, StatsManager would not write anything`
+      );
+      return;
+    }
+    if (!fs.existsSync(csvPath)) {
+      throw new Error(`'${csvPath}' does not exist`);
+    }
     const initialContent = fs.readFileSync(csvPath, "utf-8");
     if (
       !initialContent.startsWith(prefix) &&
@@ -27,6 +35,9 @@ export class StatsManager {
   }
 
   add(element: StatsElement): void {
+    if (!this.csvPath || !this.stats) {
+      return;
+    }
     const csvElement = `${element.Time},${element.PlayersOnline},${element.ServersOnline}\n`;
     fs.appendFileSync(this.csvPath, csvElement);
     this.stats.push(element);
@@ -34,13 +45,13 @@ export class StatsManager {
   }
 
   get(): Array<StatsElement> {
-    return this.stats;
+    return this.stats ? this.stats : [];
   }
 
   getLastAddMoment(): Date | undefined {
     return this.lastAdd;
   }
 
-  private stats: Array<StatsElement>;
+  private stats?: Array<StatsElement>;
   private lastAdd?: Date;
 }
