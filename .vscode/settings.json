@@ -7,7 +7,7 @@
   "breadcrumbs.enabled": false,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
-  "workbench.editorAssociations": [],
+  "workbench.editorAssociations": {},
   "workbench.editor.highlightModifiedTabs": true,
   "explorer.sortOrder": "type",
   "files.insertFinalNewline": true,
