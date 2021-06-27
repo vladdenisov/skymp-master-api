@@ -32,6 +32,9 @@ const getConfig = (): Config => {
         config[optionName] = process.env[optionName];
       }
     });
+    if (process.env.DATABASE_URL) {
+      config["DB_URL"] = process.env.DATABASE_URL;
+    }
     fs.writeFileSync(cfgPath, JSON.stringify(config));
     console.log("Using config from env");
   }
