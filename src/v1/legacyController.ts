@@ -3,7 +3,6 @@ import * as Router from "koa-router";
 import { makeStatsElement } from "../utils/makeStatsElement";
 import { cloneStructured } from "../utils/cloneStructured";
 import { prefix, StatsManager } from "../utils/statsManager";
-import * as cfg from "../cfg";
 
 const ipAndPortRegex = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[0-9]+$/;
 
