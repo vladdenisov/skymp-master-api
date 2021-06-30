@@ -50,10 +50,8 @@ export class LegacyController {
     if (!ctx.params.skympver.startsWith("5."))
       return ctx.throw(400, "Bad multiplayer version");
 
-    // We are in process of migration from AWS
-    // TODO: Change to GitHub
     ctx.body =
-      "https://skymp-client-builds.s3.eu-west-3.amazonaws.com/skymp-client-5.1.0.2-46-g4b744e0.zip";
+      "https://gitlab.com/pospelov/legacy-skymp5-binaries/-/raw/main/skymp-client-5.1.0.2-46-g4b744e0.zip";
   }
 
   static async getSkseLink(ctx: Context | Router.RouterContext): Promise<void> {
